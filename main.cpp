@@ -19,7 +19,7 @@ Mat LMS_to_lab_1 = (Mat_<double>(3,3) << 1/sqrt(3), 0, 0,
 										0, 0, 1/sqrt(2));
 Mat LMS_to_lab_2 = (Mat_<double>(3,3) <<	1, 1, 1,
 											1, 1, -2,
-											1, -1, 0);
+	 										1, -1, 0);
 Mat LMS_to_lab, lab_to_LMS;
 
 struct ct_image
