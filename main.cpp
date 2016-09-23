@@ -47,14 +47,7 @@ int main()
 {
 	transpose(RGB_to_LMS, RGB_to_LMS);
 	transpose(LMS_to_RGB, LMS_to_RGB);
-	ct_image images_1 = {"pic_1.jpg", "pic_2.jpg", "pic_1_2(1).jpg"};
-	ct_image images_2 = {"img_3.jpg", "img_4.jpg", "img_3_4(1).jpg"};
-	if(makeCT(images_1))
-	{
-		Mat res_pic = imread(images_1.result);
-		imshow(WND_NAME_RES, res_pic);
-		waitKey(0);
-	}
+	ct_image images_2 = {"images/3/pic_1.jpg", "images/3/pic_2.jpg", "images/3/img_1_2_cv.jpg"};
 	if(makeCT(images_2))
 	{
 		Mat res_pic = imread(images_2.result);
@@ -71,8 +64,8 @@ bool makeCT(ct_image images)
 	Mat imgt_lab;
 	cvtColor(imgs, imgs_lab, CV_BGR2Lab);
 	cvtColor(imgt, imgt_lab, CV_BGR2Lab);
-	imgs.convertTo(imgs, CV_64FC1);
-	imgt.convertTo(imgt, CV_64FC1);
+	imgs.convertTo(imgs, CV_32FC1);
+	imgt.convertTo(imgt, CV_32FC1);
 
 	Mat meant, means, stddt, stdds;
 	meanStdDev(imgs_lab, means, stdds);
