@@ -9,4 +9,4 @@ There are sorted images: images with one number index are sources, with two numb
 
 Letter indices: cv - made by this code, ps - photoshop, ml - matlab (https://github.com/hangong/reinhard_color_transfer), without - taken from article.
 
-As you can see same algorithms can give different results.
+This code gives image with more yellow. Some images becomes black.
