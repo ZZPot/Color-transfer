@@ -47,7 +47,7 @@ int main()
 {
 	transpose(RGB_to_LMS, RGB_to_LMS);
 	transpose(LMS_to_RGB, LMS_to_RGB);
-	ct_image images_2 = {"images/3/pic_1.jpg", "images/3/pic_2.jpg", "images/3/img_1_2_cv.jpg"};
+	ct_image images_2 = {"images/3/pic_1.jpg", "images/3/pic_2.jpg", "images/3/pic_1_2_cv.jpg"};
 	if(makeCT(images_2))
 	{
 		Mat res_pic = imread(images_2.result);
