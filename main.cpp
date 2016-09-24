@@ -3,6 +3,7 @@
 #include <string.h>
 #include <vector>
 #include <math.h>
+#include <conio.h>
 
 using namespace cv;
 
@@ -19,6 +20,11 @@ Mat LMS_to_RGB = (Mat_<float>(3,3) <<	4.4679, -3.5873, 0.1193,
 Mat LMS_to_lab_1 = (Mat_<float>(3,3) << 1/sqrt(3), 0, 0,
 										0, 1/sqrt(6), 0,
 										0, 0, 1/sqrt(2));
+Mat LMS_to_lab_1_ = (Mat_<float>(3,3) << sqrt(3)/3, 0, 0,
+										0, sqrt(6)/6, 0,
+										0, 0, sqrt(2)/2);
+
+
 Mat LMS_to_lab_2 = (Mat_<float>(3,3) << 1, 1, 1,
 											1, 1, -2,
 											1, -1, 0);
@@ -32,7 +38,6 @@ Mat LMS_to_lab = (Mat_<float>(3,3) <<	_x, _x, _x,
 Mat lab_to_LMS = (Mat_<float>(3,3) <<	_x, _y, _z,
 										_x, _y, -_z,
 										_x, -2*_y, 0);
-
 
 struct ct_image
 {
@@ -53,7 +58,10 @@ Mat convertTolab(Mat input);
 Mat convertFromlab(Mat input);
 Mat _transform(Mat mat, Mat core);
 
+void showMinStd(Mat input, std::string caption);
+
 //#define SINGLE_MATRIX
+
 
 int main()
 {
@@ -63,9 +71,9 @@ int main()
 	transpose(lab_to_LMS, lab_to_LMS);
 	transpose(LMS_to_lab_2, LMS_to_lab_2);
 
-	unsigned img_pack = 1;
+	unsigned img_pack = 2;
 
-	/*Mat temp = imread(images[img_pack].source);
+	/*Mat temp = imread(images[img_pack].target);
 	imshow(WND_NAME_RES, convertFromlab(convertTolab(temp)));
 	imshow(WND_NAME_SOURCE, temp);
 	waitKey(0);*/
@@ -75,6 +83,7 @@ int main()
 		imshow(WND_NAME_RES, res_pic);
 		waitKey(0);
 	}
+	_getch();
 	return 0;
 }
 bool makeCT(ct_image images)
@@ -98,14 +107,12 @@ bool makeCT(ct_image images)
 	{
 		imgs_lab_channels[i] = (imgs_lab_channels[i] - means.at<double>(i)) *
 		stddt.at<double>(i)/stdds.at<double>(i) + meant.at<double>(i);
-		printf("(%d) Mean/stdd:\nsource\t%f/%f\ntarget\t%f/%f\n",
-				i, means.at<double>(i), stdds.at<double>(i), // images[1] - they become -inf
-				meant.at<double>(i), stddt.at<double>(i));
 		/*imgs_lab_channels[i] -= means.at<double>(i);
 		imgs_lab_channels[i] *= stddt.at<double>(i)/stdds.at<double>(i);
 		imgs_lab_channels[i] += meant.at<double>(i); */ // wrong because OpenCV limit values at every operation (?)
 	}
-
+	showMinStd(imgs_lab, "in lab source");
+	showMinStd(imgt_lab, "in lab target");
 	Mat result;
 	merge(imgs_lab_channels, result);
 	result = convertFromlab(result);
@@ -146,10 +153,14 @@ bool makeCTCIE(ct_image images)
 }
 Mat convertTolab(Mat input)
 {
-	Mat img_BGR;
-	input.convertTo(img_BGR, CV_32FC1);
+	Mat img_RGB;
+	cvtColor(input, img_RGB, CV_BGR2RGB);
+	img_RGB.convertTo(img_RGB, CV_32FC1);
+	img_RGB /= 255;
+	showMinStd(img_RGB, "initial");
 	Mat img_lms;
-	transform(img_BGR, img_lms, RGB_to_LMS);
+	transform(img_RGB, img_lms, RGB_to_LMS);
+	showMinStd(img_lms, "after convert to LMS");
 	MatIterator_<Vec3f> iter = img_lms.begin<Vec3f>();
 	for(; iter != img_lms.end<Vec3f>(); iter++)
 	{
@@ -157,6 +168,7 @@ Mat convertTolab(Mat input)
 		(*iter)[1] = log10((*iter)[1]);
 		(*iter)[2] = log10((*iter)[2]);
 	}
+	showMinStd(img_lms, "after log10");
 	Mat img_lab;
 #ifdef SINGLE_MATRIX
 	transform(img_lms, img_lab, LMS_to_lab);
@@ -174,7 +186,7 @@ Mat convertFromlab(Mat input)
 #else
 	transpose(LMS_to_lab_2, LMS_to_lab_2);
 	transform(input, img_lms, LMS_to_lab_2);
-	transform(img_lms, img_lms, LMS_to_lab_1);
+	transform(img_lms, img_lms, LMS_to_lab_1_);
 #endif
 	
 	MatIterator_<Vec3f> iter = img_lms.begin<Vec3f>();
@@ -184,9 +196,12 @@ Mat convertFromlab(Mat input)
 		(*iter)[1] = pow(10, (*iter)[1]);
 		(*iter)[2] = pow(10, (*iter)[2]);
 	}
+	Mat img_RGB;
+	transform(img_lms, img_RGB, LMS_to_RGB);
+	img_RGB *= 255;
+	img_RGB.convertTo(img_RGB, CV_8UC1);
 	Mat img_BGR;
-	transform(img_lms, img_BGR, LMS_to_RGB);
-	img_BGR.convertTo(img_BGR, CV_8UC1);
+	cvtColor(img_RGB, img_BGR, CV_RGB2BGR);
 	return img_BGR;
 }
 Mat _transform(Mat mat, Mat core)
@@ -200,4 +215,14 @@ Mat _transform(Mat mat, Mat core)
 		(*iter)[1] = core.at<float>(2, 0) * (*iter)[0] +  core.at<float>(2, 1) * (*iter)[1] +  core.at<float>(2, 2) * (*iter)[2];
 	}
 	return res;
+}
+void showMinStd(Mat input, std::string caption)
+{
+	Mat mean, stdd;
+	meanStdDev(input, mean, stdd);
+	printf("%s\n", caption.c_str());
+	for(int i = 0; i < input.channels(); i++)
+	{
+		printf("\t%d %f %f\n", i, mean.at<double>(i), stdd.at<double>(i));
+	}
 }
