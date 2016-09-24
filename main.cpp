@@ -34,7 +34,6 @@ Mat lab_to_LMS = (Mat_<float>(3,3) <<	_x, _y, _z,
 										_x, -2*_y, 0);
 
 
-
 struct ct_image
 {
 	std::string source;
@@ -100,7 +99,7 @@ bool makeCT(ct_image images)
 		imgs_lab_channels[i] = (imgs_lab_channels[i] - means.at<double>(i)) *
 		stddt.at<double>(i)/stdds.at<double>(i) + meant.at<double>(i);
 		printf("(%d) Mean/stdd:\nsource\t%f/%f\ntarget\t%f/%f\n",
-				i, means.at<double>(i), stdds.at<double>(i), // images[2] - they become -inf
+				i, means.at<double>(i), stdds.at<double>(i), // images[1] - they become -inf
 				meant.at<double>(i), stddt.at<double>(i));
 		/*imgs_lab_channels[i] -= means.at<double>(i);
 		imgs_lab_channels[i] *= stddt.at<double>(i)/stdds.at<double>(i);
