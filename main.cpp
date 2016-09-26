@@ -46,10 +46,11 @@ struct ct_image
 	std::string result;
 };
 
-ct_image images[3] = {
+ct_image images[] = {
 	{"images/1/img_1.jpg", "images/1/img_2.jpg", "images/1/img_1_2_cv.jpg"},
 	{"images/2/img_3.jpg", "images/2/img_4.jpg", "images/2/img_3_4_cv.jpg"}, // result image becomes black
-	{"images/3/pic_1.jpg", "images/3/pic_2.jpg", "images/3/pic_1_2_cv.jpg"}};
+	{"images/3/pic_1.jpg", "images/3/pic_2.jpg", "images/3/pic_1_2_cv.jpg"},
+	{"images/4/test_1.png", "images/4/test_1.png", "images/4/test_1_1.png"}};
 
 bool makeCT(ct_image images);
 bool makeCTCIE(ct_image images);
@@ -71,7 +72,7 @@ int main()
 	transpose(lab_to_LMS, lab_to_LMS);
 	transpose(LMS_to_lab_2, LMS_to_lab_2);
 
-	unsigned img_pack = 2;
+	unsigned img_pack = 3;
 
 	/*Mat temp = imread(images[img_pack].target);
 	imshow(WND_NAME_RES, convertFromlab(convertTolab(temp)));
@@ -107,9 +108,6 @@ bool makeCT(ct_image images)
 	{
 		imgs_lab_channels[i] = (imgs_lab_channels[i] - means.at<double>(i)) *
 		stddt.at<double>(i)/stdds.at<double>(i) + meant.at<double>(i);
-		/*imgs_lab_channels[i] -= means.at<double>(i);
-		imgs_lab_channels[i] *= stddt.at<double>(i)/stdds.at<double>(i);
-		imgs_lab_channels[i] += meant.at<double>(i); */ // wrong because OpenCV limit values at every operation (?)
 	}
 	showMinStd(imgs_lab, "in lab source");
 	showMinStd(imgt_lab, "in lab target");
