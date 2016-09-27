@@ -63,7 +63,7 @@ Mat _transform(Mat mat, Mat core);
 void showMinStd(Mat input, std::string caption);
 
 //#define SINGLE_MATRIX
-//#define FROM_FLOAT
+#define FROM_FLOAT
 
 void showMat(Mat mat)
 {
@@ -91,12 +91,23 @@ int main()
 	imshow(WND_NAME_RES, convertFromlab(convertTolab(temp)));
 	imshow(WND_NAME_SOURCE, temp);
 	waitKey(0);*/
-	if(makeCT(images[img_pack]))
+/*	if(makeCT(images[img_pack]))
 	{
 		Mat res_pic = imread(images[img_pack].result);
 		imshow(WND_NAME_RES, res_pic);
 		waitKey(0);
-	}
+	}*/
+// FROM HERE
+	Mat image = imread(images[img_pack].source);
+	Mat img_lms;
+#ifdef FROM_FLOAT
+	Mat tr_rgb2lms(3,3,CV_32FC1,M_rgb2lms);
+	transform(image, img_lms, tr_rgb2lms); // here
+#else
+	transform(image, img_lms, RGB_to_LMS); // and here
+#endif
+	showMinStd(img_lms, "after convert to LMS");
+
 	_getch();
 	return 0;
 }
