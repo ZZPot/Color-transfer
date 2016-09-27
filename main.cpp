@@ -97,13 +97,13 @@ int main()
 	/*Mat temp = imread(images[img_pack].target);
 	imshow(WND_NAME_RES, convertFromlab(convertTolab(temp)));
 	imshow(WND_NAME_SOURCE, temp);
-	waitKey(0);
+	waitKey(0);*/
 	if(makeCT(images[img_pack]))
 	{
 		Mat res_pic = imread(images[img_pack].result);
 		imshow(WND_NAME_RES, res_pic);
 		waitKey(0);
-	}*/
+	}
 	_getch();
 	return 0;
 }
