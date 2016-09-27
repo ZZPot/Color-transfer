@@ -1,4 +1,4 @@
-# Color-transfer
+# Color transfer
 Color transfer method
 
 My attempt to implement color transfer method described in www.cs.tau.ac.il/~turkel/imagepapers/ColorTransfer.pdf
@@ -9,4 +9,10 @@ There are sorted images: images with one number index are sources, with two numb
 
 Letter indices: cv - made by this code, ps - photoshop, ml - matlab (https://github.com/hangong/reinhard_color_transfer), without - taken from article.
 
-This code gives image with more yellow. Some images becomes black.
+Result of 2nd image pack is ugly.
+
+## Used as examples these projects
+https://github.com/codedhead/colortransfer
+
+https://github.com/hangong/reinhard_color_transfer
+

@@ -33,11 +33,6 @@ Mat LMS_to_lab = (Mat_<float>(3,3) <<	_x, _x, _x,
 Mat lab_to_LMS = (Mat_<float>(3,3) <<	_x, _y, _z,
 										_x, _y, -_z,
 										_x, -2*_y, 0);
-float M_rgb2lms[]={
-	0.3811f, 0.5783f, 0.0402f,
-	0.1967f, 0.7244f, 0.0782f,
-	0.0241f, 0.1228f, 0.8444f
-};
 
 struct ct_image
 {
@@ -63,7 +58,6 @@ Mat _transform(Mat mat, Mat core);
 void showMinStd(Mat input, std::string caption);
 
 //#define SINGLE_MATRIX
-#define FROM_FLOAT
 
 void showMat(Mat mat)
 {
@@ -75,40 +69,21 @@ void showMat(Mat mat)
 		}
 		printf("\n");
 	}
-	
 }
 int main()
 {
-	//transpose(RGB_to_LMS, RGB_to_LMS);
-	//transpose(LMS_to_RGB, LMS_to_RGB);
-	//transpose(LMS_to_lab, LMS_to_lab);
-	//transpose(lab_to_LMS, lab_to_LMS);
-	//transpose(LMS_to_lab_2, LMS_to_lab_2);
+	unsigned img_pack = 1;
 
-	unsigned img_pack = 3;
-
-	/*Mat temp = imread(images[img_pack].target);
+	/*Mat temp = imread(images[img_pack].source);
 	imshow(WND_NAME_RES, convertFromlab(convertTolab(temp)));
 	imshow(WND_NAME_SOURCE, temp);
 	waitKey(0);*/
-/*	if(makeCT(images[img_pack]))
+	if(makeCT(images[img_pack]))
 	{
 		Mat res_pic = imread(images[img_pack].result);
 		imshow(WND_NAME_RES, res_pic);
 		waitKey(0);
-	}*/
-// FROM HERE
-	Mat image = imread(images[img_pack].source);
-	Mat img_lms;
-#ifdef FROM_FLOAT
-	Mat tr_rgb2lms(3,3,CV_32FC1,M_rgb2lms);
-	transform(image, img_lms, tr_rgb2lms); // here
-#else
-	transform(image, img_lms, RGB_to_LMS); // and here
-#endif
-	showMinStd(img_lms, "after convert to LMS");
-
-	_getch();
+	}
 	return 0;
 }
 bool makeCT(ct_image images)
@@ -180,32 +155,17 @@ Mat convertTolab(Mat input)
 	img_RGB.convertTo(img_RGB, CV_32FC1, 1/255.f);
 	showMinStd(img_RGB, "initial");
 	Mat img_lms;
-#ifdef FROM_FLOAT
-	Mat tr_rgb2lms(3,3,CV_32FC1,M_rgb2lms);
-	transform(img_RGB, img_lms, tr_rgb2lms); // here
-#else
-	transform(img_RGB, img_lms, RGB_to_LMS); // and here
-#endif
+	transform(img_RGB, img_lms, RGB_to_LMS);
 	showMinStd(img_lms, "after convert to LMS");
-	/*MatIterator_<Vec3f> iter = img_lms.begin<Vec3f>();
-	for(; iter != img_lms.end<Vec3f>(); iter++)
-	{
-		(*iter)[0] = log10((*iter)[0]);
-		(*iter)[1] = log10((*iter)[1]);
-		(*iter)[2] = log10((*iter)[2]);
-	}*/
 	// this trick from Jun Yan's code
 	// log10(x)=ln(x)/ln(10)
 	log(img_lms,img_lms);
 	img_lms /= log(10);
-
 	showMinStd(img_lms, "after log10");
 	Mat img_lab;
 #ifdef SINGLE_MATRIX
 	transform(img_lms, img_lab, LMS_to_lab);
 #else
-	//transform(img_lms, img_lab, LMS_to_lab_1);
-	//transform(img_lab, img_lab, LMS_to_lab_2);
 	transform(img_lms, img_lab, LMS_to_lab_1 * LMS_to_lab_2);
 #endif
 	return img_lab;
@@ -217,18 +177,8 @@ Mat convertFromlab(Mat input)
 	transform(input, img_lms, lab_to_LMS);
 #else
 	transpose(LMS_to_lab_2, LMS_to_lab_2);
-	//transform(input, img_lms, LMS_to_lab_2); // again limits don't do this at home
-	//transform(img_lms, img_lms, LMS_to_lab_1_);
 	transform(input, img_lms, LMS_to_lab_2 * LMS_to_lab_1);
 #endif
-	
-	/*MatIterator_<Vec3f> iter = img_lms.begin<Vec3f>();
-	for(; iter != img_lms.end<Vec3f>(); iter++)
-	{
-		(*iter)[0] = pow(10, (*iter)[0]);
-		(*iter)[1] = pow(10, (*iter)[1]);
-		(*iter)[2] = pow(10, (*iter)[2]);
-	}*/
 	// this trick from Jun Yan's code
 	// 10^x=(e^x)^(ln10)
 	exp(img_lms,img_lms);
@@ -240,18 +190,6 @@ Mat convertFromlab(Mat input)
 	Mat img_BGR;
 	cvtColor(img_RGB, img_BGR, CV_RGB2BGR);
 	return img_BGR;
-}
-Mat _transform(Mat mat, Mat core)
-{
-	Mat res = mat.clone();
-	MatIterator_<Vec3f> iter = res.begin<Vec3f>();
-	for(; iter != res.end<Vec3f>(); iter++)
-	{
-		(*iter)[0] = core.at<float>(0, 0) * (*iter)[0] +  core.at<float>(0, 1) * (*iter)[1] +  core.at<float>(0, 2) * (*iter)[2];
-		(*iter)[1] = core.at<float>(1, 0) * (*iter)[0] +  core.at<float>(1, 1) * (*iter)[1] +  core.at<float>(1, 2) * (*iter)[2];
-		(*iter)[1] = core.at<float>(2, 0) * (*iter)[0] +  core.at<float>(2, 1) * (*iter)[1] +  core.at<float>(2, 2) * (*iter)[2];
-	}
-	return res;
 }
 void showMinStd(Mat input, std::string caption)
 {
