@@ -22,21 +22,14 @@ Mat LMS_to_RGB = (Mat_<float>(3,3) <<	4.4679f, -3.5873f, 0.1193f,
 Mat LMS_to_lab_1 = (Mat_<float>(3,3) << 1/sqrt(3), 0, 0,
 										0, 1/sqrt(6), 0,
 										0, 0, 1/sqrt(2));
-Mat LMS_to_lab_1_ = (Mat_<float>(3,3) <<sqrt(3)/3, 0, 0,
-										0, sqrt(6)/6, 0,
-										0, 0, sqrt(2)/2);
-
-
 Mat LMS_to_lab_2 = (Mat_<float>(3,3) << 1, 1, 1,
 										1, 1, -2,
 										1, -1, 0);
 
 float _x = 1/sqrt(3), _y = 1/sqrt(6), _z = 1/sqrt(2);
-
 Mat LMS_to_lab = (Mat_<float>(3,3) <<	_x, _x, _x,
 										_y, _y, -2*_y,
 										_z, -_z, 0);
-
 Mat lab_to_LMS = (Mat_<float>(3,3) <<	_x, _y, _z,
 										_x, _y, -_z,
 										_x, -2*_y, 0);
@@ -69,8 +62,8 @@ Mat _transform(Mat mat, Mat core);
 
 void showMinStd(Mat input, std::string caption);
 
-#define SINGLE_MATRIX
-#define FROM_FLOAT
+//#define SINGLE_MATRIX
+//#define FROM_FLOAT
 
 void showMat(Mat mat)
 {
@@ -90,7 +83,7 @@ int main()
 	//transpose(LMS_to_RGB, LMS_to_RGB);
 	//transpose(LMS_to_lab, LMS_to_lab);
 	//transpose(lab_to_LMS, lab_to_LMS);
-	transpose(LMS_to_lab_2, LMS_to_lab_2);
+	//transpose(LMS_to_lab_2, LMS_to_lab_2);
 
 	unsigned img_pack = 3;
 
@@ -202,7 +195,7 @@ Mat convertTolab(Mat input)
 #else
 	//transform(img_lms, img_lab, LMS_to_lab_1);
 	//transform(img_lab, img_lab, LMS_to_lab_2);
-	transform(img_lab, img_lab, LMS_to_lab_1 * LMS_to_lab_2);
+	transform(img_lms, img_lab, LMS_to_lab_1 * LMS_to_lab_2);
 #endif
 	return img_lab;
 }
