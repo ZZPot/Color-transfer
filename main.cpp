@@ -72,7 +72,7 @@ void showMat(Mat mat)
 }
 int main()
 {
-	unsigned img_pack = 1;
+	unsigned img_pack = 3;
 
 	/*Mat temp = imread(images[img_pack].source);
 	imshow(WND_NAME_RES, convertFromlab(convertTolab(temp)));
@@ -102,14 +102,24 @@ bool makeCT(ct_image images)
 	std::vector<Mat> imgs_lab_channels, imgt_lab_channels;
 	split(imgs_lab, imgs_lab_channels);
 	split(imgt_lab, imgt_lab_channels);
-
-	for(int i = 0; i < 3; i++)
-	{
-		imgs_lab_channels[i] = (imgs_lab_channels[i] - means.at<double>(i)) *
-		stddt.at<double>(i)/stdds.at<double>(i) + meant.at<double>(i);
-	}
 	showMinStd(imgs_lab, "in lab source");
 	showMinStd(imgt_lab, "in lab target");
+	for(int i = 0; i < 3; i++)
+	{
+		double koef;
+		if(stddt.at<double>(i) == stdds.at<double>(i))
+			koef = 1;
+		else
+			koef = stddt.at<double>(i)/stdds.at<double>(i);
+		if(stdds.at<double>(i) == 0)
+		{
+			printf("Single color in source image\n");
+			continue; // leave it same.
+		}
+		imgs_lab_channels[i] = (imgs_lab_channels[i] - means.at<double>(i)) *
+			koef + meant.at<double>(i);
+	}
+	
 	Mat result;
 	merge(imgs_lab_channels, result);
 	result = convertFromlab(result);
@@ -152,6 +162,8 @@ Mat convertTolab(Mat input)
 {
 	Mat img_RGB;
 	cvtColor(input, img_RGB, CV_BGR2RGB);
+	Mat min_mat = Mat::Mat(img_RGB.size(), CV_8UC3, Scalar(1, 1, 1));
+	max(img_RGB, min_mat, img_RGB); // VERY IMPORTANT, got it from Han Gong's code, and I don't know what for. Why it can't get black?
 	img_RGB.convertTo(img_RGB, CV_32FC1, 1/255.f);
 	showMinStd(img_RGB, "initial");
 	Mat img_lms;
