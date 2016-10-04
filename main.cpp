@@ -10,6 +10,12 @@ using namespace cv;
 #define WND_NAME_RES "Result Picture"
 #define WND_NAME_SOURCE "Source Picture"
 
+/* For escaping zeros*/
+#define EPSILON			0.07
+#define RED_MUL			0.21
+#define GREEN_MUL		0.72
+#define BLUE_MUL		0.07
+
 Mat RGB_to_LMS = (Mat_<float>(3,3) <<	0.3811f, 0.5783f, 0.0402f,
 										0.1967f, 0.7244f, 0.0782f,
 										0.0241f, 0.1288f, 0.8444f);
@@ -43,10 +49,8 @@ struct ct_image
 
 ct_image images[] = {
 	{"images/1/img_1.jpg", "images/1/img_2.jpg", "images/1/img_1_2_cv.jpg"},
-	{"images/2/img_3.jpg", "images/2/img_4.jpg", "images/2/img_3_4_cv.jpg"}, // result image becomes black
-	{"images/3/pic_1.jpg", "images/3/pic_2.jpg", "images/3/pic_1_2_cv.jpg"},
-	{"images/4/test_1.png", "images/4/test_1.png", "images/4/test_1_1.png"},
-	{"images/5/test_2.png", "images/5/test_2.png", "images/5/test_2_2.png"}};
+	{"images/2/img_3.jpg", "images/2/img_4.jpg", "images/2/img_3_4_cv.jpg"},
+	{"images/3/pic_1.jpg", "images/3/pic_2.jpg", "images/3/pic_1_2_cv.jpg"}};
 
 bool makeCT(ct_image images);
 bool makeCTCIE(ct_image images);
@@ -72,7 +76,7 @@ void showMat(Mat mat)
 }
 int main()
 {
-	unsigned img_pack = 3;
+	unsigned img_pack = 1;
 
 	/*Mat temp = imread(images[img_pack].source);
 	imshow(WND_NAME_RES, convertFromlab(convertTolab(temp)));
@@ -162,12 +166,15 @@ Mat convertTolab(Mat input)
 {
 	Mat img_RGB;
 	cvtColor(input, img_RGB, CV_BGR2RGB);
-	Mat min_mat = Mat::Mat(img_RGB.size(), CV_8UC3, Scalar(1, 1, 1));
-	max(img_RGB, min_mat, img_RGB); // VERY IMPORTANT, got it from Han Gong's code, and I don't know what for. Why it can't get black?
+	Scalar min_scalar(EPSILON, EPSILON, EPSILON);
+	Mat min_mat = Mat::Mat(img_RGB.size(), CV_32FC3, min_scalar);
 	img_RGB.convertTo(img_RGB, CV_32FC1, 1/255.f);
+	// To escape zeros in LMS color space, we need to replace every black pixel
+	//max(img_RGB, min_mat, img_RGB); // before converting to LMS
 	showMinStd(img_RGB, "initial");
 	Mat img_lms;
 	transform(img_RGB, img_lms, RGB_to_LMS);
+	max(img_lms, min_mat, img_lms); // right before log10
 	showMinStd(img_lms, "after convert to LMS");
 	// this trick from Jun Yan's code
 	// log10(x)=ln(x)/ln(10)
