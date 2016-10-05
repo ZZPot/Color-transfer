@@ -1,5 +1,6 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <iostream>
 #include <string.h>
 #include <vector>
 #include <math.h>
@@ -19,7 +20,6 @@ using namespace cv;
 Mat RGB_to_LMS = (Mat_<float>(3,3) <<	0.3811f, 0.5783f, 0.0402f,
 										0.1967f, 0.7244f, 0.0782f,
 										0.0241f, 0.1288f, 0.8444f);
-
 
 Mat LMS_to_RGB = (Mat_<float>(3,3) <<	4.4679f, -3.5873f, 0.1193f,
 										-1.2186f, 2.3809f, -0.1624f,
@@ -49,7 +49,7 @@ struct ct_image
 
 ct_image images[] = {
 	{"images/1/img_1.jpg", "images/1/img_2.jpg", "images/1/img_1_2_cv.jpg"},
-	{"images/2/img_3.jpg", "images/2/img_4.jpg", "images/2/img_3_4_cv.jpg"},
+	{"images/2/img_3.jpg", "images/2/img_4.jpg", "images/2/img_3_4_cv1.jpg"},
 	{"images/3/pic_1.jpg", "images/3/pic_2.jpg", "images/3/pic_1_2_cv.jpg"}};
 
 bool makeCT(ct_image images);
@@ -62,7 +62,7 @@ Mat _transform(Mat mat, Mat core);
 void showMinStd(Mat input, std::string caption);
 
 //#define SINGLE_MATRIX
-
+#define PER_CHANNEL
 void showMat(Mat mat)
 {
 	for(int i = 0; i < mat.rows; i++)
@@ -78,10 +78,6 @@ int main()
 {
 	unsigned img_pack = 1;
 
-	/*Mat temp = imread(images[img_pack].source);
-	imshow(WND_NAME_RES, convertFromlab(convertTolab(temp)));
-	imshow(WND_NAME_SOURCE, temp);
-	waitKey(0);*/
 	if(makeCT(images[img_pack]))
 	{
 		Mat res_pic = imread(images[img_pack].result);
@@ -102,12 +98,11 @@ bool makeCT(ct_image images)
 	Mat meant, means, stddt, stdds;
 	meanStdDev(imgs_lab, means, stdds);
 	meanStdDev(imgt_lab, meant, stddt);
-
+	Mat result;
+#ifdef PER_CHANNEL
 	std::vector<Mat> imgs_lab_channels, imgt_lab_channels;
 	split(imgs_lab, imgs_lab_channels);
 	split(imgt_lab, imgt_lab_channels);
-	showMinStd(imgs_lab, "in lab source");
-	showMinStd(imgt_lab, "in lab target");
 	for(int i = 0; i < 3; i++)
 	{
 		double koef;
@@ -117,15 +112,21 @@ bool makeCT(ct_image images)
 			koef = stddt.at<double>(i)/stdds.at<double>(i);
 		if(stdds.at<double>(i) == 0)
 		{
-			printf("Single color in source image\n");
 			continue; // leave it same.
 		}
 		imgs_lab_channels[i] = (imgs_lab_channels[i] - means.at<double>(i)) *
 			koef + meant.at<double>(i);
 	}
-	
-	Mat result;
 	merge(imgs_lab_channels, result);
+#else
+	Scalar	mean_src(means.at<double>(0), means.at<double>(1), means.at<double>(2)),
+			mean_tg(meant.at<double>(0), meant.at<double>(1), meant.at<double>(2)),
+			koef(	stddt.at<double>(0)/stdds.at<double>(0),
+					stddt.at<double>(1)/stdds.at<double>(1),
+					stddt.at<double>(2)/stdds.at<double>(2));
+	multiply((imgs_lab - mean_src), koef, imgs_lab);
+	result = imgs_lab + mean_tg;
+#endif
 	result = convertFromlab(result);
 	imwrite(images.result, result);
 	return true;
@@ -182,7 +183,7 @@ Mat convertTolab(Mat input)
 	img_lms /= log(10);
 	showMinStd(img_lms, "after log10");
 	Mat img_lab;
-#ifdef SINGLE_MATRIX
+#ifdef SINGLE_MATRIX ˜CV_LOAD_IMAGE_GRAYSCALE
 	transform(img_lms, img_lab, LMS_to_lab);
 #else
 	transform(img_lms, img_lab, LMS_to_lab_1 * LMS_to_lab_2);
